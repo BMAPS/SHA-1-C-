@@ -1,0 +1,122 @@
+using System;
+
+namespace Secure_Hashing_Alg___1
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("enter plaintext");
+            string plaintext = Console.ReadLine();
+            SHA1(plaintext);
+        }
+
+        static byte[] SHA1(string plaintext)
+        {
+            uint[] H = new uint[5];
+            byte[] hash = new byte[5];
+            byte[] AsciiChars = System.Text.Encoding.ASCII.GetBytes(plaintext);
+            byte[] ml = BitConverter.GetBytes((ulong)(plaintext.Length * 8));
+            H[0] = 0x67452301;
+            H[1] = 0xEFCDAB89;
+            H[2] = 0x98BADCFE;
+            H[3] = 0x10325476;
+            H[4] = 0xC3D2E1F0;
+            uint[] W = new uint[80];
+            int j = 0;
+            for (int i = 0; i < 14; i++)
+            {
+                int p = 3;
+                while (p > -1 && j < AsciiChars.Length)
+                {
+                    W[i] = W[i] | RotateLeft((uint)AsciiChars[j], p * 8);
+
+                    j = j + 1;
+                    p = p - 1;
+                } 
+                if (j == AsciiChars.Length) {
+                    W[i] = W[i] + 0x80;
+                    j = j + 1;
+                }
+            }
+            j = 7;
+            for (int i = 14; i < 16; i++)
+            {
+                int p = 3;
+                while (p > -1)
+                {
+                    W[i] = W[i] | RotateLeft((uint)ml[j], p * 8);
+                    j = j - 1;
+                    p = p - 1;
+                }
+            }
+
+            for (int i = 16; i < 80; i++)
+            {
+                W[i] = (W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16]);
+                W[i] = RotateLeft(W[i], 1);
+            }
+
+            uint A = H[0];
+            uint B = H[1];
+            uint C = H[2];
+            uint D = H[3];
+            uint E = H[4];
+            uint K = 0;
+            uint F = 0;
+            uint Temp;
+            for (int i = 0; i < 80; i++)
+            {
+                if (i >= 0 && i <= 19)
+                {
+                    K = 0x5A827999;
+                    F = D ^ (B & (C ^ D));
+                }
+                else if (i >= 20 && i <= 39)
+                {
+                    K = 0x6ED9EBA1;
+                    F = B ^ C ^ D;
+                }
+                else if (i >= 40 && i <= 59)
+                {
+                    K = 0x8F1BBCDC;
+                    F = (B & C) | (D & (B | C));
+                }
+                else if (i >= 60 && i <= 79)
+                {
+                    K = 0xCA62C1D6;
+                    F = B ^ C ^ D;
+                }
+                Temp = RotateLeft(A, 5) + F + E + W[i] + K;
+                E = D;
+                D = C;
+                C = RotateLeft(B, 30);
+                B = A;
+                A = Temp;
+            }
+
+            H[0] = H[0] + A;
+            H[3] = H[3] + D;
+            H[4] = H[4] + E;
+            H[1] = H[1] + B;
+            H[2] = H[2] + C;
+            for (int i = 0; i < 5; i++)
+            {
+                hash[i] = (byte)H[i];
+                Console.Write(Convert.ToString(H[i], 16));
+            }
+
+            return hash;
+        }
+
+        static uint RotateLeft(uint value, int count)
+        {
+            return ((value << count) | (value >> (32 - count)));
+        }
+
+        static uint RotateRight(uint value, int count)
+        {
+            return ((value >> count) | (value << (32 - count)));
+        }
+    }
+}
